@@ -7,8 +7,6 @@ Este proyecto contiene una pipeline simple usando **GitHub Actions** que:
 
 Todo se realiza de forma remota a través de **SSH**, usando claves privadas seguras gestionadas como *secrets* de GitHub.
 
----
-
 ## 📂 Estructura del proyecto
 
 ```bash
@@ -21,7 +19,7 @@ Todo se realiza de forma remota a través de **SSH**, usando claves privadas seg
 │   └── say_hello.sh            # Script para imprimir "hola mundo"
 └── README.md
 
----
+```
 
 ## ⚙️ Requisitos
 
@@ -30,8 +28,6 @@ Todo se realiza de forma remota a través de **SSH**, usando claves privadas seg
 - Clave privada `.pem` con permisos SSH al EC2.
 - Repositorio remoto accesible por HTTPS.
 - Puertos abiertos: `22` (SSH).
-
----
 
 ## 🔐 Configuración de Secrets
 
@@ -42,8 +38,6 @@ En tu repositorio de GitHub, ve a `Settings > Secrets and variables > Actions` y
 | `EC2_HOST`        | IP pública o DNS de tu instancia EC2                 |
 | `EC2_SSH_KEY`     | Clave privada SSH (`.pem`) para acceder al EC2       |
 
----
-
 ## 🚀 Cómo funciona
 
 Cada vez que haces push a la rama `main`, GitHub Actions:
@@ -53,8 +47,6 @@ Cada vez que haces push a la rama `main`, GitHub Actions:
 3. Luego ejecuta `scripts/say_hello.sh`, que imprime `hola mundo`.
 
 Todo esto se define en el archivo [`deploy.yml`](.github/workflows/deploy.yml).
-
----
 
 ## 🧪 Prueba manual
 

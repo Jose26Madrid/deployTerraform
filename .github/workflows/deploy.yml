@@ -15,8 +15,8 @@ jobs:
 
       - name: Clonar repositorio en EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ secrets.EC2_HOST }} 'bash -s' < ./scripts/clone_repo.sh https://github.com/Jose26Madrid/deployTerraform.git
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@$34.240.188.161 'bash -s' < ./scripts/clone_repo.sh https://github.com/Jose26Madrid/deployTerraform.git
 
       - name: Ejecutar hola mundo en EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ secrets.EC2_HOST }} 'bash -s' < ./scripts/say_hello.sh
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@34.240.188.161 'bash -s' < ./scripts/say_hello.sh
