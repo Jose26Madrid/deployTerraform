@@ -59,6 +59,8 @@ bash scripts/clone_repo.sh https://github.com/tu-usuario/tu-repo.git ~/mi-repo
 # Ejecutar hola mundo
 bash scripts/say_hello.sh
 
+
+```
 ## 📄 Licencia
 
 Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
