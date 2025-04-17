@@ -5,47 +5,51 @@ on:
     branches:
       - main
 
+env:
+  INSTANCE_ID: i-0515980dba1b663a2
+  AWS_REGION: eu-west-1
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-1
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Iniciar instancia EC2 solo si está detenida
+      - name: Iniciar instancia EC2 si es necesario
         run: |
-          INSTANCE_ID=i-0515980dba1b663a2
           STATE=$(aws ec2 describe-instances \
             --instance-ids $INSTANCE_ID \
             --query "Reservations[0].Instances[0].State.Name" \
             --output text)
-        
+
           echo "Estado actual: $STATE"
-        
+
           if [ "$STATE" = "stopped" ]; then
-            echo "La instancia está detenida. Iniciando..."
             aws ec2 start-instances --instance-ids $INSTANCE_ID
-            echo "Esperando a que esté en estado 'running'..."
             aws ec2 wait instance-running --instance-ids $INSTANCE_ID
           elif [ "$STATE" = "stopping" ]; then
-            echo "La instancia se está deteniendo. Esperando que se detenga..."
             aws ec2 wait instance-stopped --instance-ids $INSTANCE_ID
-            echo "Ahora iniciando..."
             aws ec2 start-instances --instance-ids $INSTANCE_ID
             aws ec2 wait instance-running --instance-ids $INSTANCE_ID
           elif [ "$STATE" = "pending" ]; then
-            echo "La instancia se está iniciando. Esperando que esté en 'running'..."
             aws ec2 wait instance-running --instance-ids $INSTANCE_ID
-          else
-            echo "La instancia ya está en estado '$STATE'."
           fi
- 
+
+      - name: Obtener IP pública de la instancia
+        id: getip
+        run: |
+          IP=$(aws ec2 describe-instances \
+            --instance-ids $INSTANCE_ID \
+            --query "Reservations[0].Instances[0].PublicIpAddress" \
+            --output text)
+          echo "ec2_ip=$IP" >> $GITHUB_OUTPUT
+
       - name: Checkout este repositorio
         uses: actions/checkout@v3
 
@@ -54,19 +58,28 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Clonar repositorio en EC2
+      - name: Clonar repositorio en EC2 (sin script)
         run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@54.75.16.21 'bash -s' < ./scripts/clone_repo.sh
-        
-      - name: Ejecutar hola mundo en EC2
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.getip.outputs.ec2_ip }} << 'EOF'
+            echo "Clonando repositorio en ~/repo"
+            mkdir -p ~/repo
+            cd ~/repo
+            if [ ! -d terraform ]; then
+              git clone https://github.com/Jose26Madrid/terraform.git
+            else
+              echo "El repositorio ya está clonado"
+            fi
+          EOF
+
+      - name: Ejecutar Hola Mundo en EC2 (sin script)
         run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@54.75.16.21 'bash -s' < ./scripts/say_hello.sh
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.getip.outputs.ec2_ip }} << 'EOF'
+            echo "hola mundo desde la instancia EC2"
+          EOF
 
       - name: Detener instancia al finalizar
         if: always()
         run: |
-          INSTANCE_ID=i-0515980dba1b663a2
-          echo "Deteniendo instancia..."
           aws ec2 stop-instances --instance-ids $INSTANCE_ID
           aws ec2 wait instance-stopped --instance-ids $INSTANCE_ID
-          echo "Instancia detenida correctamente."    
+          echo "Instancia detenida correctamente."
