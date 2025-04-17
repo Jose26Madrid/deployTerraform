@@ -34,17 +34,17 @@ jobs:
             echo "La instancia ya está en estado '$STATE'. No se inicia."
           fi
  
-      # - name: Checkout este repositorio
-      #   uses: actions/checkout@v3
+      - name: Checkout este repositorio
+        uses: actions/checkout@v3
 
-      # - name: Crear archivo de clave privada
-      #   run: |
-      #     echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
-      #     chmod 600 ec2_key.pem
+      - name: Crear archivo de clave privada
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
 
-      # - name: Clonar repositorio en EC2
-      #   run: |
-      #     ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@54.75.16.21 'bash -s' < ./scripts/clone_repo.sh
+      - name: Clonar repositorio en EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@54.75.16.21 'bash -s' < ./scripts/clone_repo.sh
         
       # - name: Ejecutar hola mundo en EC2
       #   run: |
