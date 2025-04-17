@@ -21,6 +21,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Checkout este repositorio
+        uses: actions/checkout@v3
+
+      - name: Leer URL del repositorio desde config.properties
+        id: config
+        run: |
+          REPO_URL=$(grep '^REPO_URL=' config.properties | cut -d '=' -f2-)
+          echo "REPO_URL=$REPO_URL"
+          echo "repo_url=$REPO_URL" >> $GITHUB_OUTPUT
+
       - name: Iniciar instancia EC2 si es necesario
         run: |
           STATE=$(aws ec2 describe-instances \
@@ -50,28 +60,25 @@ jobs:
             --output text)
           echo "ec2_ip=$IP" >> $GITHUB_OUTPUT
 
-      - name: Checkout este repositorio
-        uses: actions/checkout@v3
-
       - name: Crear archivo de clave privada
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Clonar repositorio en EC2 (sin script)
+      - name: Clonar repositorio en EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.getip.outputs.ec2_ip }} << 'EOF'
-            echo "Clonando repositorio en ~/repo"
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.getip.outputs.ec2_ip }} << EOF
+            echo "Clonando repositorio..."
             mkdir -p ~/repo
             cd ~/repo
             if [ ! -d terraform ]; then
-              git clone https://github.com/Jose26Madrid/terraform.git
+              git clone "${{ steps.config.outputs.repo_url }}"
             else
               echo "El repositorio ya está clonado"
             fi
           EOF
 
-      - name: Ejecutar Hola Mundo en EC2 (sin script)
+      - name: Ejecutar Hola Mundo en EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.getip.outputs.ec2_ip }} << 'EOF'
             echo "hola mundo desde la instancia EC2"
