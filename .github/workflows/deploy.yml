@@ -41,6 +41,11 @@ jobs:
           echo "Clonando repo $REPO_NAME..."
           git clone "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@${REPO_URL#https://}"
 
+      - name: Instalar Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
       - name: Ejecutar Hola Mundo desde repo clonado
         run: |
           REPO_URL="${{ steps.config.outputs.repo_url }}"
