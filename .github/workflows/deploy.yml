@@ -19,24 +19,24 @@ jobs:
           FILE=config/config.properties
 
           if [ ! -f "$FILE" ]; then
-            echo "❌ Archivo $FILE no encontrado"
+            echo "❌ Archivo ${FILE} no encontrado"
             exit 1
           fi
 
-          REPO_URL=$(grep '^REPO_URL=' "$FILE" | cut -d '=' -f2-)
+          REPO_URL=$(grep '^REPO_URL=' "${FILE}" | cut -d '=' -f2-)
 
           if [ -z "$REPO_URL" ]; then
-            echo "❌ Variable REPO_URL no encontrada o vacía"
+            echo "❌ Variable {REPO_URL} no encontrada o vacía"
             exit 1
           fi
 
-          echo "✅ URL encontrada: $REPO_URL"
-          echo "repo_url=$REPO_URL" >> $GITHUB_OUTPUT
+          echo "✅ URL encontrada: ${REPO_URL}"
+          echo "repo_url=${REPO_URL}" >> ${GITHUB_OUTPUT}
 
       - name: Clonar repo privado
         run: |
           REPO_URL="${{ steps.config.outputs.repo_url }}"
-          REPO_NAME=$(basename -s .git "$REPO_URL")
+          REPO_NAME=$(basename -s .git "${REPO_URL}")
 
           echo "Clonando repo ${REPO_NAME}..."
           git clone "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@${REPO_URL#https://}"
@@ -49,10 +49,10 @@ jobs:
       - name: Ejecutar Hola Mundo desde repo clonado
         run: |
           REPO_URL="${{ steps.config.outputs.repo_url }}"
-          REPO_NAME=$(basename -s .git "$REPO_URL")
+          REPO_NAME=$(basename -s .git "${REPO_URL}")
 
-          echo "Entrando al repo clonado: $REPO_NAME"
-          cd "$REPO_NAME"
+          echo "Entrando al repo clonado: ${REPO_NAME}"
+          cd "${REPO_NAME}"
           ls -lrt
 
           # Aquí puedes poner cualquier script o lógica del repo clonado
