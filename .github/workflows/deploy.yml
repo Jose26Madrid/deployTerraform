@@ -11,8 +11,8 @@ env:
   AWS_REGION: eu-west-1
 
 jobs:
-  configurar-aws:
-    name: 🧰 Configurar credenciales AWS
+  deploy:
+    name: 🚀 Pipeline completa
     runs-on: ubuntu-latest
 
     steps:
@@ -23,29 +23,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-  generar-clave:
-    name: 🔐 Generar clave SSH
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Crear archivo de clave privada
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Subir clave como artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ec2_key
-          path: ec2_key.pem
-
-  preparar-entorno:
-    name: 🚀 Iniciar instancia EC2
-    runs-on: ubuntu-latest
-    needs: [configurar-aws, generar-clave]
-
-    steps:
-      - name: Iniciar instancia si es necesario
+      - name: Iniciar instancia EC2 si es necesario
         run: |
           STATE=$(aws ec2 describe-instances \
             --instance-ids $INSTANCE_ID \
@@ -65,23 +48,11 @@ jobs:
             aws ec2 wait instance-running --instance-ids $INSTANCE_ID
           fi
 
-  clonar-repo:
-    name: 🧬 Clonar repositorio en EC2
-    runs-on: ubuntu-latest
-    needs: [preparar-entorno, generar-clave]
-
-    steps:
-      - name: Descargar clave
-        uses: actions/download-artifact@v3
-        with:
-          name: ec2_key
-
       - name: Checkout repositorio actual
         uses: actions/checkout@v3
 
-      - name: Clonar repositorio en EC2
+      - name: Clonar repositorio si no existe
         run: |
-          chmod 600 ec2_key.pem
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_IP << 'EOF'
             if [ ! -d "$HOME/terraform" ]; then
               git clone https://github.com/Jose26Madrid/terraform.git ~/terraform
@@ -90,29 +61,12 @@ jobs:
             fi
           EOF
 
-  ejecutar-hola:
-    name: 💬 Ejecutar Hola Mundo en EC2
-    runs-on: ubuntu-latest
-    needs: [clonar-repo, generar-clave]
-
-    steps:
-      - name: Descargar clave
-        uses: actions/download-artifact@v3
-        with:
-          name: ec2_key
-
       - name: Ejecutar script hola mundo
         run: |
-          chmod 600 ec2_key.pem
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@$EC2_IP 'bash -s' < ./scripts/say_hello.sh
 
-  detener-instancia:
-    name: 🛑 Detener instancia EC2
-    runs-on: ubuntu-latest
-    needs: [ejecutar-hola, configurar-aws]
-
-    steps:
-      - name: Detener instancia
+      - name: Detener instancia al finalizar
+        if: always()
         run: |
           aws ec2 stop-instances --instance-ids $INSTANCE_ID
           aws ec2 wait instance-stopped --instance-ids $INSTANCE_ID
