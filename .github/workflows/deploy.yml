@@ -65,16 +65,19 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Clonar repositorio en EC2
+      - name: Clonar repositorio en EC2 (dinámicamente)
         run: |
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.getip.outputs.ec2_ip }} << EOF
-            echo "Clonando repositorio..."
-            mkdir -p ~/repo
-            cd ~/repo
-            if [ ! -d terraform ]; then
-              git clone "${{ steps.config.outputs.repo_url }}"
+            REPO_URL="${{ steps.config.outputs.repo_url }}"
+            REPO_NAME=\$(basename -s .git "\$REPO_URL")
+
+            echo "Clonando repositorio si no existe: \$REPO_NAME"
+            cd repo
+
+            if [ ! -d "\$REPO_NAME" ]; then
+              git clone "\$REPO_URL"
             else
-              echo "El repositorio ya está clonado"
+              echo "El repositorio '\$REPO_NAME' ya está clonado"
             fi
           EOF
 
