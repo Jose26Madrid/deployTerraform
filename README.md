@@ -14,9 +14,8 @@ Todo se realiza de forma remota a través de **SSH**, usando claves privadas seg
 ├── .github
 │   └── workflows
 │       └── deploy.yml          # Pipeline de GitHub Actions
-├── scripts
-│   ├── clone_repo.sh           # Script para clonar el repositorio en EC2
-│   └── say_hello.sh            # Script para imprimir "hola mundo"
+├── config
+│   └── config.properties       # Properties con la conf del repo que clona
 └── README.md
 
 ```
