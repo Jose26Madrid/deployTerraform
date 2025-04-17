@@ -34,7 +34,7 @@ jobs:
           chmod 600 ec2_key.pem
 
       - name: Subir clave como artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: ec2_key
           path: ec2_key.pem
@@ -66,13 +66,13 @@ jobs:
           fi
 
   clonar-repo:
-    name: 🧬 Clonar repositorio si no existe
+    name: 🧬 Clonar repositorio en EC2
     runs-on: ubuntu-latest
     needs: [preparar-entorno, generar-clave]
 
     steps:
       - name: Descargar clave
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v3.1.2
         with:
           name: ec2_key
 
@@ -97,7 +97,7 @@ jobs:
 
     steps:
       - name: Descargar clave
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v3.1.2
         with:
           name: ec2_key
 
