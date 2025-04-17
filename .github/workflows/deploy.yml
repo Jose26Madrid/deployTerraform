@@ -48,7 +48,7 @@ jobs:
         
       - name: Ejecutar hola mundo en EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@354.75.16.21 'bash -s' < ./scripts/say_hello.sh
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@54.75.16.21 'bash -s' < ./scripts/say_hello.sh
 
       - name: Detener instancia al finalizar
         if: always()
