@@ -1,4 +1,4 @@
 #!/bin/bash
 echo "hola mundo"
-ls -lrt
+ls -lrt repo/terraform
 pwd
