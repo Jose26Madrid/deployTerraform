@@ -46,15 +46,15 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@54.75.16.21 'bash -s' < ./scripts/clone_repo.sh
         
-      # - name: Ejecutar hola mundo en EC2
-      #   run: |
-      #     ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@354.75.16.21 'bash -s' < ./scripts/say_hello.sh
+      - name: Ejecutar hola mundo en EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@354.75.16.21 'bash -s' < ./scripts/say_hello.sh
 
-      # - name: Detener instancia al finalizar
-      #   if: always()
-      #   run: |
-      #     INSTANCE_ID=i-0515980dba1b663a2
-      #     echo "Deteniendo instancia..."
-      #     aws ec2 stop-instances --instance-ids $INSTANCE_ID
-      #     aws ec2 wait instance-stopped --instance-ids $INSTANCE_ID
-      #     echo "Instancia detenida correctamente."    
+      - name: Detener instancia al finalizar
+        if: always()
+        run: |
+          INSTANCE_ID=i-0515980dba1b663a2
+          echo "Deteniendo instancia..."
+          aws ec2 stop-instances --instance-ids $INSTANCE_ID
+          aws ec2 wait instance-stopped --instance-ids $INSTANCE_ID
+          echo "Instancia detenida correctamente."    
