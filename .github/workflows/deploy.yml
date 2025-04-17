@@ -24,12 +24,26 @@ jobs:
       - name: Checkout este repositorio
         uses: actions/checkout@v3
 
-      - name: Leer URL del repositorio desde config.properties
+      - name: Leer URL del repositorio desde config/config.properties
         id: config
         run: |
-          REPO_URL=$(grep '^REPO_URL=' config.properties | cut -d '=' -f2-)
-          echo "REPO_URL=$REPO_URL"
+          FILE=config/config.properties
+      
+          if [ ! -f "$FILE" ]; then
+            echo "❌ Archivo $FILE no encontrado"
+            exit 1
+          fi
+      
+          REPO_URL=$(grep '^REPO_URL=' "$FILE" | cut -d '=' -f2-)
+      
+          if [ -z "$REPO_URL" ]; then
+            echo "❌ Variable REPO_URL no encontrada o vacía"
+            exit 1
+          fi
+      
+          echo "✅ URL encontrada: $REPO_URL"
           echo "repo_url=$REPO_URL" >> $GITHUB_OUTPUT
+      
 
       - name: Iniciar instancia EC2 si es necesario
         run: |
