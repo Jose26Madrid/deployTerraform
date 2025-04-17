@@ -38,7 +38,7 @@ jobs:
           REPO_URL="${{ steps.config.outputs.repo_url }}"
           REPO_NAME=$(basename -s .git "$REPO_URL")
 
-          echo "Clonando repo $REPO_NAME..."
+          echo "Clonando repo ${REPO_NAME}..."
           git clone "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@${REPO_URL#https://}"
 
       - name: Instalar Terraform
