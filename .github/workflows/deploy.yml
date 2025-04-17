@@ -10,13 +10,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout este repositorio
-        uses: actions/checkout@v3
 
-      - name: Clonar repositorio en EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@$34.240.188.161 'bash -s' < ./scripts/clone_repo.sh https://github.com/Jose26Madrid/deployTerraform.git
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
 
-      - name: Ejecutar hola mundo en EC2
+      - name: Iniciar instancia EC2 solo si está detenida
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} ec2-user@34.240.188.161 'bash -s' < ./scripts/say_hello.sh
+          STATE=$(aws ec2 describe-instances \
+            --instance-ids i-0515980dba1b663a2 \
+            --query "Reservations[0].Instances[0].State.Name" \
+            --output text)
+        
+          echo "Estado actual: $STATE"
+        
+          if [ "$STATE" = "stopped" ]; then
+            echo "La instancia está detenida. Iniciando..."
+            aws ec2 start-instances --instance-ids i-0515980dba1b663a2
+          else
+            echo "La instancia ya está en estado '$STATE'. No se inicia."
+          fi
+ 
+      # - name: Checkout este repositorio
+      #   uses: actions/checkout@v3
+
+      # - name: Crear archivo de clave privada
+      #   run: |
+      #     echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+      #     chmod 600 ec2_key.pem
+
+      # - name: Clonar repositorio en EC2
+      #   run: |
+      #     ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@54.75.16.21 'bash -s' < ./scripts/clone_repo.sh
+        
+      # - name: Ejecutar hola mundo en EC2
+      #   run: |
+      #     ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@354.75.16.21 'bash -s' < ./scripts/say_hello.sh
+
+      # - name: Detener instancia al finalizar
+      #   if: always()
+      #   run: |
+      #     INSTANCE_ID=i-0515980dba1b663a2
+      #     echo "Deteniendo instancia..."
+      #     aws ec2 stop-instances --instance-ids $INSTANCE_ID
+      #     aws ec2 wait instance-stopped --instance-ids $INSTANCE_ID
+      #     echo "Instancia detenida correctamente."    
