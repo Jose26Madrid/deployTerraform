@@ -1,27 +1,15 @@
-name: Deploy to EC2
+name: Deploy sin EC2
 
 on:
   push:
     tags:
-      - '*'  # Esto significa: "cualquier tag"
-      
-
-env:
-  INSTANCE_ID: i-0515980dba1b663a2
-  AWS_REGION: eu-west-1
+      - '*'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Configurar credenciales AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
       - name: Checkout este repositorio
         uses: actions/checkout@v3
 
@@ -29,82 +17,38 @@ jobs:
         id: config
         run: |
           FILE=config/config.properties
-      
+
           if [ ! -f "$FILE" ]; then
             echo "❌ Archivo $FILE no encontrado"
             exit 1
           fi
-      
+
           REPO_URL=$(grep '^REPO_URL=' "$FILE" | cut -d '=' -f2-)
-      
+
           if [ -z "$REPO_URL" ]; then
             echo "❌ Variable REPO_URL no encontrada o vacía"
             exit 1
           fi
-      
+
           echo "✅ URL encontrada: $REPO_URL"
           echo "repo_url=$REPO_URL" >> $GITHUB_OUTPUT
-      
 
-      - name: Iniciar instancia EC2 si es necesario
+      - name: Clonar repo privado
         run: |
-          STATE=$(aws ec2 describe-instances \
-            --instance-ids $INSTANCE_ID \
-            --query "Reservations[0].Instances[0].State.Name" \
-            --output text)
+          REPO_URL="${{ steps.config.outputs.repo_url }}"
+          REPO_NAME=$(basename -s .git "$REPO_URL")
 
-          echo "Estado actual: $STATE"
+          echo "Clonando repo $REPO_NAME..."
+          git clone "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@${REPO_URL#https://}"
 
-          if [ "$STATE" = "stopped" ]; then
-            aws ec2 start-instances --instance-ids $INSTANCE_ID
-            aws ec2 wait instance-running --instance-ids $INSTANCE_ID
-          elif [ "$STATE" = "stopping" ]; then
-            aws ec2 wait instance-stopped --instance-ids $INSTANCE_ID
-            aws ec2 start-instances --instance-ids $INSTANCE_ID
-            aws ec2 wait instance-running --instance-ids $INSTANCE_ID
-          elif [ "$STATE" = "pending" ]; then
-            aws ec2 wait instance-running --instance-ids $INSTANCE_ID
-          fi
-
-      - name: Obtener IP pública de la instancia
-        id: getip
+      - name: Ejecutar Hola Mundo desde repo clonado
         run: |
-          IP=$(aws ec2 describe-instances \
-            --instance-ids $INSTANCE_ID \
-            --query "Reservations[0].Instances[0].PublicIpAddress" \
-            --output text)
-          echo "ec2_ip=$IP" >> $GITHUB_OUTPUT
+          REPO_URL="${{ steps.config.outputs.repo_url }}"
+          REPO_NAME=$(basename -s .git "$REPO_URL")
 
-      - name: Crear archivo de clave privada
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
-          chmod 600 ec2_key.pem
+          echo "Entrando al repo clonado: $REPO_NAME"
+          cd "$REPO_NAME"
+          ls -lrt
 
-      - name: Clonar repositorio en EC2 (dinámicamente)
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.getip.outputs.ec2_ip }} << EOF
-            REPO_URL="${{ steps.config.outputs.repo_url }}"
-            REPO_NAME=\$(basename -s .git "\$REPO_URL")
-
-            echo "Clonando repositorio si no existe: \$REPO_NAME"
-            cd repo
-
-            if [ ! -d "\$REPO_NAME" ]; then
-              git clone "\$REPO_URL"
-            else
-              echo "El repositorio '\$REPO_NAME' ya está clonado"
-            fi
-          EOF
-
-      - name: Ejecutar Hola Mundo en EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ steps.getip.outputs.ec2_ip }} << 'EOF'
-            echo "hola mundo desde la instancia EC2"
-          EOF
-
-      - name: Detener instancia al finalizar
-        if: always()
-        run: |
-          aws ec2 stop-instances --instance-ids $INSTANCE_ID
-          aws ec2 wait instance-stopped --instance-ids $INSTANCE_ID
-          echo "Instancia detenida correctamente."
+          # Aquí puedes poner cualquier script o lógica del repo clonado
+          echo "👋 Hola desde el repo clonado!"
