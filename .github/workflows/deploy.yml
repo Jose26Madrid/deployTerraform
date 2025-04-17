@@ -20,8 +20,9 @@ jobs:
 
       - name: Iniciar instancia EC2 solo si está detenida
         run: |
+          INSTANCE_ID=i-0515980dba1b663a2
           STATE=$(aws ec2 describe-instances \
-            --instance-ids i-0515980dba1b663a2 \
+            --instance-ids $INSTANCE_ID \
             --query "Reservations[0].Instances[0].State.Name" \
             --output text)
         
@@ -29,9 +30,20 @@ jobs:
         
           if [ "$STATE" = "stopped" ]; then
             echo "La instancia está detenida. Iniciando..."
-            aws ec2 start-instances --instance-ids i-0515980dba1b663a2
+            aws ec2 start-instances --instance-ids $INSTANCE_ID
+            echo "Esperando a que esté en estado 'running'..."
+            aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+          elif [ "$STATE" = "stopping" ]; then
+            echo "La instancia se está deteniendo. Esperando que se detenga..."
+            aws ec2 wait instance-stopped --instance-ids $INSTANCE_ID
+            echo "Ahora iniciando..."
+            aws ec2 start-instances --instance-ids $INSTANCE_ID
+            aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+          elif [ "$STATE" = "pending" ]; then
+            echo "La instancia se está iniciando. Esperando que esté en 'running'..."
+            aws ec2 wait instance-running --instance-ids $INSTANCE_ID
           else
-            echo "La instancia ya está en estado '$STATE'. No se inicia."
+            echo "La instancia ya está en estado '$STATE'."
           fi
  
       - name: Checkout este repositorio
