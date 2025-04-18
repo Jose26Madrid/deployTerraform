@@ -105,7 +105,7 @@ jobs:
             git commit -m "🚀 Commit automático desde GitHub Actions por tag $GITHUB_REF_NAME"
   
             # 🔐 Setear la URL con token antes del push
-            git remote set-url origin "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/Jose26Madrid/${REPO_NAME}.git"
+            git remote set-url origin "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@${REPO_URL#https://}"
   
             echo "🔁 Haciendo push forzado..."
             git push origin HEAD --force
