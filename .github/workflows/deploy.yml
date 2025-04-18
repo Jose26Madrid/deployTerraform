@@ -46,6 +46,9 @@ jobs:
         with:
           terraform_version: 1.6.6
 
+      - name: Ver versión de Terraform
+        run: terraform version
+
       - name: Ejecutar Hola Mundo desde repo clonado
         run: |
           REPO_URL="${{ steps.config.outputs.repo_url }}"
