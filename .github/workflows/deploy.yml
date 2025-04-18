@@ -87,22 +87,27 @@ jobs:
             echo "⚠️ Valor de 'install' no reconocido: '$INSTALL'. No se ejecutará ninguna acción."
           fi
 
-      - name: Hacer commit y push forzado de todo lo que haya
-        run: |
-          REPO_URL="${{ steps.config.outputs.repo_url }}"
-          REPO_NAME=$(basename -s .git "${REPO_URL}")
-          cd "${REPO_NAME}"
-
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          git add -A
-
-          if git diff-index --quiet HEAD; then
-            echo "✅ No hay cambios para commitear."
-          else
-            echo "✅ Hay cambios. Haciendo commit..."
-            git commit -m "🚀 Commit automático desde GitHub Actions por tag $GITHUB_REF_NAME"
-            echo "🔁 Haciendo push forzado..."
-            git push origin HEAD --force
-          fi
+          - name: Hacer commit y push forzado de todo lo que haya
+          run: |
+            REPO_URL="${{ steps.config.outputs.repo_url }}"
+            REPO_NAME=$(basename -s .git "${REPO_URL}")
+            cd "${REPO_NAME}"
+  
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+  
+            git add -A
+  
+            if git diff-index --quiet HEAD; then
+              echo "✅ No hay cambios para commitear."
+            else
+              echo "✅ Hay cambios. Haciendo commit..."
+              git commit -m "🚀 Commit automático desde GitHub Actions por tag $GITHUB_REF_NAME"
+  
+              # 🔐 Setear la URL con token antes del push
+              git remote set-url origin "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/Jose26Madrid/${REPO_NAME}.git"
+  
+              echo "🔁 Haciendo push forzado..."
+              git push origin HEAD --force
+            fi
+  
