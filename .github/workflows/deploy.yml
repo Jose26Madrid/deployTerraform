@@ -49,7 +49,7 @@ jobs:
       - name: Ver versión de Terraform
         run: terraform version
 
-      - name: Ejecutar Hola Mundo desde repo clonado
+      - name: Ejecutar terraform
         run: |
           REPO_URL="${{ steps.config.outputs.repo_url }}"
           REPO_NAME=$(basename -s .git "${REPO_URL}")
@@ -58,5 +58,59 @@ jobs:
           cd "${REPO_NAME}"
           ls -lrt
 
-          # Aquí puedes poner cualquier script o lógica del repo clonado
-          echo "👋 Hola desde el repo clonado!"
+          CONFIG_FILE="config/config.properties"
+
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "❌ Archivo ${CONFIG_FILE} no encontrado"
+            exit 1
+          fi
+
+          INSTALL=$(grep '^install=' "$CONFIG_FILE" | cut -d '=' -f2- | tr -d '[:space:]')
+
+          echo "🔧 Valor de install: '${INSTALL}'"
+
+          if [ -z "$INSTALL" ]; then
+            echo "ℹ️ No se definió 'install'. No se ejecutará ninguna acción de Terraform."
+            exit 0
+          fi
+
+          # Esperar si hay un lock file de Terraform (solo si usas local backend)
+          if [ -f ".terraform.tfstate.lock.info" ]; then
+            echo "⏳ Esperando a que termine otro proceso de Terraform..."
+            while [ -f ".terraform.tfstate.lock.info" ]; do
+              sleep 5
+            done
+          fi
+
+          echo "🔍 Ejecutando Terraform init..."
+          terraform init -input=false
+
+          if [ "$INSTALL" = "true" ]; then
+            echo "🚀 Ejecutando terraform apply"
+            terraform apply -auto-approve
+          elif [ "$INSTALL" = "false" ]; then
+            echo "💣 Ejecutando terraform destroy"
+            terraform destroy -auto-approve
+          else
+            echo "⚠️ Valor de 'install' no reconocido: '$INSTALL'"
+          fi     
+
+      - name: Hacer commit y push forzado de todo lo que haya
+        run: |
+          REPO_URL="${{ steps.config.outputs.repo_url }}"
+          REPO_NAME=$(basename -s .git "${REPO_URL}")
+          cd "${REPO_NAME}"
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add -A
+
+          if git diff-index --quiet HEAD; then
+            echo "✅ No hay cambios para commitear."
+          else
+            echo "✅ Hay cambios. Haciendo commit..."
+            git commit -m "🚀 Commit automático desde GitHub Actions"
+            echo "🔁 Haciendo push forzado..."
+            git push origin HEAD --force
+          fi
