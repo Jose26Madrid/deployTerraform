@@ -13,7 +13,7 @@ jobs:
       - name: Checkout este repositorio
         uses: actions/checkout@v3
 
-      - name: Leer URL del repositorio desde config/config.properties
+      - name: Leer configuración desde config/config.properties
         id: config
         run: |
           FILE=config/config.properties
@@ -23,15 +23,17 @@ jobs:
             exit 1
           fi
 
-          REPO_URL=$(grep '^REPO_URL=' "${FILE}" | cut -d '=' -f2-)
+          REPO_URL=$(grep '^REPO_URL=' "$FILE" | cut -d '=' -f2-)
+          INSTALL=$(grep '^install=' "$FILE" | cut -d '=' -f2- | tr -d '[:space:]')
 
           if [ -z "$REPO_URL" ]; then
-            echo "❌ Variable {REPO_URL} no encontrada o vacía"
+            echo "❌ Variable REPO_URL no encontrada o vacía"
             exit 1
           fi
 
           echo "✅ URL encontrada: ${REPO_URL}"
-          echo "repo_url=${REPO_URL}" >> ${GITHUB_OUTPUT}
+          echo "repo_url=${REPO_URL}" >> "$GITHUB_OUTPUT"
+          echo "install=${INSTALL}" >> "$GITHUB_OUTPUT"
 
       - name: Clonar repo privado
         run: |
@@ -49,34 +51,24 @@ jobs:
       - name: Ver versión de Terraform
         run: terraform version
 
-      - name: Ejecutar terraform
+      - name: Ejecutar Terraform
         run: |
           REPO_URL="${{ steps.config.outputs.repo_url }}"
           REPO_NAME=$(basename -s .git "${REPO_URL}")
+          INSTALL="${{ steps.config.outputs.install }}"
 
-          echo "Entrando al repo clonado: ${REPO_NAME}"
+          echo "📂 Entrando al repo clonado: ${REPO_NAME}"
           cd "${REPO_NAME}"
           ls -lrt
 
-          CONFIG_FILE="config/config.properties"
-
-          if [ ! -f "$CONFIG_FILE" ]; then
-            echo "❌ Archivo ${CONFIG_FILE} no encontrado"
-            exit 1
-          fi
-
-          INSTALL=$(grep '^install=' "$CONFIG_FILE" | cut -d '=' -f2- | tr -d '[:space:]')
-
-          echo "🔧 Valor de install: '${INSTALL}'"
-
           if [ -z "$INSTALL" ]; then
-            echo "ℹ️ No se definió 'install'. No se ejecutará ninguna acción de Terraform."
+            echo "ℹ️ Variable 'install' vacía o no definida. No se ejecutará Terraform."
             exit 0
           fi
 
-          # Esperar si hay un lock file de Terraform (solo si usas local backend)
+          # Lock local (opcional si usas backend local)
           if [ -f ".terraform.tfstate.lock.info" ]; then
-            echo "⏳ Esperando a que termine otro proceso de Terraform..."
+            echo "⏳ Esperando a que se libere el lock de Terraform..."
             while [ -f ".terraform.tfstate.lock.info" ]; do
               sleep 5
             done
@@ -92,8 +84,8 @@ jobs:
             echo "💣 Ejecutando terraform destroy"
             terraform destroy -auto-approve
           else
-            echo "⚠️ Valor de 'install' no reconocido: '$INSTALL'"
-          fi     
+            echo "⚠️ Valor de 'install' no reconocido: '$INSTALL'. No se ejecutará ninguna acción."
+          fi
 
       - name: Hacer commit y push forzado de todo lo que haya
         run: |
@@ -110,7 +102,7 @@ jobs:
             echo "✅ No hay cambios para commitear."
           else
             echo "✅ Hay cambios. Haciendo commit..."
-            git commit -m "🚀 Commit automático desde GitHub Actions"
+            git commit -m "🚀 Commit automático desde GitHub Actions por tag $GITHUB_REF_NAME"
             echo "🔁 Haciendo push forzado..."
             git push origin HEAD --force
           fi
