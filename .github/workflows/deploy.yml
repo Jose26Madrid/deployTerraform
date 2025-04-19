@@ -170,7 +170,7 @@ jobs:
                 git push origin HEAD --force
               else
                 echo "ℹ️ Archivo '${OUTPUT_FILE}' no encontrado en el repo. Nada que borrar."
-                exit 0
+                exit 1
               fi
             else
               echo "⚠️ Valor INSTALL no válido. No se realizará ninguna acción en infraTerraform."
