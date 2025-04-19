@@ -160,17 +160,21 @@ jobs:
               echo "📤 Haciendo push de los cambios al repo infraTerraform..."
               git push origin HEAD --force
             fi        
-          else [ "$INSTALL" = "false" ]; then
-            if [ -f "${OUTPUT_FILE}" ]; then
-              echo "🗑 Eliminando archivo '${OUTPUT_FILE}' del repo '${CLONED_REPO_NAME}'"
-              git rm "${OUTPUT_FILE}"
-              git commit -m "🧹 Eliminando salida de Terraform para ${ORIGINAL_REPO_NAME} tras destroy"
-              echo "📤 Haciendo push de los cambios al repo infraTerraform..."
-              git push origin HEAD --force
+          else
+            if [ "$INSTALL" = "false" ]; then
+              if [ -f "${OUTPUT_FILE}" ]; then
+                echo "🗑 Eliminando archivo '${OUTPUT_FILE}' del repo '${CLONED_REPO_NAME}'"
+                git rm "${OUTPUT_FILE}"
+                git commit -m "🧹 Eliminando salida de Terraform para ${ORIGINAL_REPO_NAME} tras destroy"
+                echo "📤 Haciendo push de los cambios al repo infraTerraform..."
+                git push origin HEAD --force
+              else
+                echo "ℹ️ Archivo '${OUTPUT_FILE}' no encontrado en el repo. Nada que borrar."
+                exit 0
+              fi
             else
-              echo "ℹ️ Archivo '${OUTPUT_FILE}' no encontrado en el repo. Nada que borrar."
+              echo "⚠️ Valor INSTALL no válido. No se realizará ninguna acción en infraTerraform."
               exit 0
-            fi
           fi
       
 # MIT License
