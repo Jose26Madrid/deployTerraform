@@ -144,6 +144,7 @@ jobs:
           cd ..
           pwd
           ls -lrt
+          ls -lrt deployTerraform
           git clone "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@${REPO_URL#https://}"
           cd "${CLONED_REPO_NAME}"
           pwd
