@@ -156,12 +156,12 @@ jobs:
               fi
         
               echo "📄 Copiando archivo '${OUTPUT_FILE}' al repo '${CLONED_REPO_NAME}'"
-              ls -lrt "../${ORIGINAL_REPO_URL}/${OUTPUT_FILE}"
-              cp "../${ORIGINAL_REPO_URL}/${OUTPUT_FILE}" .
+              ls -lrt "../${ORIGINAL_REPO_NAME}/${OUTPUT_FILE}"
+              cp "../${ORIGINAL_REPO_NAME}/${OUTPUT_FILE}" .
               git add "${OUTPUT_FILE}"
               git commit -m "📦 Añadiendo salida de Terraform para ${ORIGINAL_REPO_NAME}"
             else
-              ls -lrt "../${ORIGINAL_REPO_URL}/${OUTPUT_FILE}"
+              ls -lrt "../${ORIGINAL_REPO_NAME}/${OUTPUT_FILE}"
               echo "❌ Archivo de salida '../${OUTPUT_FILE}' no encontrado. No se puede subir."
               exit 1
             fi
