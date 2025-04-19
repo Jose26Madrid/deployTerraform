@@ -142,8 +142,12 @@ jobs:
         
           echo "Clonando repo ${REPO_URL}..."
           cd ..
+          pwd
+          ls -lrt
           git clone "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@${REPO_URL#https://}"
           cd "${CLONED_REPO_NAME}"
+          pwd
+          ls -lrt
         
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
