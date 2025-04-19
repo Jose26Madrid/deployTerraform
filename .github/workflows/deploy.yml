@@ -175,6 +175,7 @@ jobs:
             else
               echo "⚠️ Valor INSTALL no válido. No se realizará ninguna acción en infraTerraform."
               exit 0
+            fi
           fi
       
 # MIT License
