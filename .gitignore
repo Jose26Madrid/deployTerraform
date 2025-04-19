@@ -1,0 +1,9 @@
+# ✅ Ignora directorio de plugins, binarios, etc.
+.terraform/
+*.tfplan
+*.backup
+crash.log
+
+# ⚠️ PERO NO ignores el estado si usas backend local
+# terraform.tfstate  ← ❌ ¡NO lo ignores si necesitas usar destroy!
+# terraform.tfstate.* ← ❌
