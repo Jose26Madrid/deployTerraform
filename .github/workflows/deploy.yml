@@ -92,9 +92,11 @@ jobs:
           if [ "$INSTALL" = "true" ]; then
             echo "🚀 Ejecutando terraform apply"
             terraform apply -auto-approve | tee "$OUTPUT_FILE"
+            ls -lrt
           elif [ "$INSTALL" = "false" ]; then
             echo "💣 Ejecutando terraform destroy"
-            terraform destroy -auto-approve
+            terraform destroy -auto-approve | tee "$OUTPUT_FILE"
+            ls -lrt
           else
             echo "⚠️ Valor de 'install' no reconocido: '$INSTALL'. No se ejecutará ninguna acción."
           fi
@@ -143,15 +145,20 @@ jobs:
           git config user.email "github-actions@github.com"
         
           if [ "$INSTALL" = "true" ]; then
-            if [ -f "${OUTPUT_FILE}" ]; then
-              echo "⚠️ El archivo '${OUTPUT_FILE}' ya existe. No se subirá de nuevo."
-              exit 0
-            fi
+            if [ -f "../${OUTPUT_FILE}" ]; then
+              if [ -f "${OUTPUT_FILE}" ]; then
+                echo "⚠️ El archivo '${OUTPUT_FILE}' ya existe en el repo. No se subirá de nuevo."
+                exit 0
+              fi
         
-            echo "📄 Copiando archivo '${OUTPUT_FILE}' al repo '${CLONED_REPO_NAME}'"
-            cp "../${OUTPUT_FILE}" .
-            git add "${OUTPUT_FILE}"
-            git commit -m "📦 Añadiendo salida de Terraform para ${ORIGINAL_REPO_NAME}"
+              echo "📄 Copiando archivo '${OUTPUT_FILE}' al repo '${CLONED_REPO_NAME}'"
+              cp "../${OUTPUT_FILE}" .
+              git add "${OUTPUT_FILE}"
+              git commit -m "📦 Añadiendo salida de Terraform para ${ORIGINAL_REPO_NAME}"
+            else
+              echo "❌ Archivo de salida '../${OUTPUT_FILE}' no encontrado. No se puede subir."
+              exit 1
+            fi
         
           elif [ "$INSTALL" = "false" ]; then
             if [ -f "${OUTPUT_FILE}" ]; then
@@ -159,7 +166,7 @@ jobs:
               git rm "${OUTPUT_FILE}"
               git commit -m "🧹 Eliminando salida de Terraform para ${ORIGINAL_REPO_NAME} tras destroy"
             else
-              echo "ℹ️ Archivo '${OUTPUT_FILE}' no encontrado. Nada que borrar."
+              echo "ℹ️ Archivo '${OUTPUT_FILE}' no encontrado en el repo. Nada que borrar."
               exit 0
             fi
           else
@@ -169,8 +176,7 @@ jobs:
         
           echo "📤 Haciendo push de los cambios al repo infraTerraform..."
           git push origin HEAD --force
-              
-
+      
 # MIT License
 # Copyright (c) 2025 Jose Magariño
 # See LICENSE file for more details.
