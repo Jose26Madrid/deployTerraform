@@ -87,9 +87,11 @@ jobs:
           echo "🔍 Ejecutando Terraform init..."
           terraform init -input=false
 
+          OUTPUT_FILE="../${REPO_NAME}.txt"
+
           if [ "$INSTALL" = "true" ]; then
             echo "🚀 Ejecutando terraform apply"
-            terraform apply -auto-approve
+            terraform apply -auto-approve | tee "$OUTPUT_FILE"
           elif [ "$INSTALL" = "false" ]; then
             echo "💣 Ejecutando terraform destroy"
             terraform destroy -auto-approve
@@ -120,6 +122,54 @@ jobs:
             echo "🔁 Haciendo push forzado..."
             git push origin HEAD --force
           fi
+
+      - name: Clonar repo infra Terraform
+        run: |
+          REPO_URL="https://github.com/Jose26Madrid/infraTerraform.git"
+          CLONED_REPO_NAME="infraTerraform"
+        
+          # Variables del repo original y nombre del archivo
+          ORIGINAL_REPO_URL="${{ steps.config.outputs.repo_url }}"
+          ORIGINAL_REPO_NAME=$(basename -s .git "${ORIGINAL_REPO_URL}")
+          OUTPUT_FILE="${ORIGINAL_REPO_NAME}.txt"
+          INSTALL="${{ steps.config.outputs.install }}"
+        
+          echo "Clonando repo ${REPO_URL}..."
+          cd ..
+          git clone "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@${REPO_URL#https://}"
+          cd "${CLONED_REPO_NAME}"
+        
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+        
+          if [ "$INSTALL" = "true" ]; then
+            if [ -f "${OUTPUT_FILE}" ]; then
+              echo "⚠️ El archivo '${OUTPUT_FILE}' ya existe. No se subirá de nuevo."
+              exit 0
+            fi
+        
+            echo "📄 Copiando archivo '${OUTPUT_FILE}' al repo '${CLONED_REPO_NAME}'"
+            cp "../${OUTPUT_FILE}" .
+            git add "${OUTPUT_FILE}"
+            git commit -m "📦 Añadiendo salida de Terraform para ${ORIGINAL_REPO_NAME}"
+        
+          elif [ "$INSTALL" = "false" ]; then
+            if [ -f "${OUTPUT_FILE}" ]; then
+              echo "🗑 Eliminando archivo '${OUTPUT_FILE}' del repo '${CLONED_REPO_NAME}'"
+              git rm "${OUTPUT_FILE}"
+              git commit -m "🧹 Eliminando salida de Terraform para ${ORIGINAL_REPO_NAME} tras destroy"
+            else
+              echo "ℹ️ Archivo '${OUTPUT_FILE}' no encontrado. Nada que borrar."
+              exit 0
+            fi
+          else
+            echo "⚠️ Valor INSTALL no válido ('$INSTALL'). No se realizará ninguna acción en infraTerraform."
+            exit 0
+          fi
+        
+          echo "📤 Haciendo push de los cambios al repo infraTerraform..."
+          git push origin HEAD --force
+              
 
 # MIT License
 # Copyright (c) 2025 Jose Magariño
