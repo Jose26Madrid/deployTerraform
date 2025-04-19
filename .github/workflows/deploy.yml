@@ -87,7 +87,7 @@ jobs:
           echo "🔍 Ejecutando Terraform init..."
           terraform init -input=false
 
-          OUTPUT_FILE="../${REPO_NAME}.txt"
+          OUTPUT_FILE="${REPO_NAME}.txt"
 
           if [ "$INSTALL" = "true" ]; then
             echo "🚀 Ejecutando terraform apply"
@@ -141,52 +141,37 @@ jobs:
           INSTALL="${{ steps.config.outputs.install }}"
         
           echo "Clonando repo ${REPO_URL}..."
-          cd ..
-          pwd
-          ls -lrt
-          ls -lrt deployTerraform
           git clone "https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@${REPO_URL#https://}"
           cd "${CLONED_REPO_NAME}"
-          pwd
-          ls -lrt
         
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
         
           if [ "$INSTALL" = "true" ]; then
-            if [ -f "../${ORIGINAL_REPO_URL}/${OUTPUT_FILE}" ]; then
-              if [ -f "${OUTPUT_FILE}" ]; then
-                echo "⚠️ El archivo '${OUTPUT_FILE}' ya existe en el repo. No se subirá de nuevo."
-                exit 0
-              fi
-        
+            if [ -f "${OUTPUT_FILE}" ]; then
+              echo "❌ Archivo de salida ya existe. No se puede subir."
+              ls -lrt
+            else
               echo "📄 Copiando archivo '${OUTPUT_FILE}' al repo '${CLONED_REPO_NAME}'"
-              ls -lrt "../${ORIGINAL_REPO_NAME}/${OUTPUT_FILE}"
-              cp "../${ORIGINAL_REPO_NAME}/${OUTPUT_FILE}" .
+              ls -lrt ../${ORIGINAL_REPO_URL}
+              cp "../${ORIGINAL_REPO_URL}/${OUTPUT_FILE}" .
               git add "${OUTPUT_FILE}"
               git commit -m "📦 Añadiendo salida de Terraform para ${ORIGINAL_REPO_NAME}"
-            else
-              ls -lrt "../${ORIGINAL_REPO_NAME}/${OUTPUT_FILE}"
-              echo "❌ Archivo de salida '../${OUTPUT_FILE}' no encontrado. No se puede subir."
-              exit 1
-            fi
-        
-          elif [ "$INSTALL" = "false" ]; then
+              echo "📤 Haciendo push de los cambios al repo infraTerraform..."
+              git push origin HEAD --force
+            fi        
+          else [ "$INSTALL" = "false" ]; then
             if [ -f "${OUTPUT_FILE}" ]; then
               echo "🗑 Eliminando archivo '${OUTPUT_FILE}' del repo '${CLONED_REPO_NAME}'"
               git rm "${OUTPUT_FILE}"
               git commit -m "🧹 Eliminando salida de Terraform para ${ORIGINAL_REPO_NAME} tras destroy"
+              echo "📤 Haciendo push de los cambios al repo infraTerraform..."
+              git push origin HEAD --force
             else
               echo "ℹ️ Archivo '${OUTPUT_FILE}' no encontrado en el repo. Nada que borrar."
               exit 0
             fi
-          else
-            echo "⚠️ Valor INSTALL no válido ('$INSTALL'). No se realizará ninguna acción en infraTerraform."
-            exit 0
           fi
-        
-          echo "📤 Haciendo push de los cambios al repo infraTerraform..."
-          git push origin HEAD --force
       
 # MIT License
 # Copyright (c) 2025 Jose Magariño
