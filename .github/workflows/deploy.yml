@@ -91,12 +91,16 @@ jobs:
 
           if [ "$INSTALL" = "true" ]; then
             echo "🚀 Ejecutando terraform apply"
-            terraform apply -auto-approve | tee "$OUTPUT_FILE"
+            terraform apply -auto-approve > "$OUTPUT_FILE" 2>&1
             ls -lrt
+            echo "📄 Contenido de ${OUTPUT_FILE}:"
+            cat "$OUTPUT_FILE"
           elif [ "$INSTALL" = "false" ]; then
             echo "💣 Ejecutando terraform destroy"
-            terraform destroy -auto-approve | tee "$OUTPUT_FILE"
+            terraform destroy -auto-approve > "$OUTPUT_FILE" 2>&1
             ls -lrt
+            echo "📄 Contenido de ${OUTPUT_FILE}:"
+            cat "$OUTPUT_FILE"
           else
             echo "⚠️ Valor de 'install' no reconocido: '$INSTALL'. No se ejecutará ninguna acción."
           fi
