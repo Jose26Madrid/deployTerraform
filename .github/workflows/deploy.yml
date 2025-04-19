@@ -120,4 +120,7 @@ jobs:
             echo "🔁 Haciendo push forzado..."
             git push origin HEAD --force
           fi
-  
+
+# MIT License
+# Copyright (c) 2025 Jose Magariño
+# See LICENSE file for more details.
