@@ -156,6 +156,7 @@ jobs:
               fi
         
               echo "📄 Copiando archivo '${OUTPUT_FILE}' al repo '${CLONED_REPO_NAME}'"
+              ls -lrt "../${ORIGINAL_REPO_URL}/${OUTPUT_FILE}"
               cp "../${ORIGINAL_REPO_URL}/${OUTPUT_FILE}" .
               git add "${OUTPUT_FILE}"
               git commit -m "📦 Añadiendo salida de Terraform para ${ORIGINAL_REPO_NAME}"
