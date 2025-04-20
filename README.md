@@ -9,6 +9,9 @@ Este proyecto contiene una pipeline simple usando **GitHub Actions** que:
    - `install=false` → hace `terraform destroy`.
    - `install` vacío o indefinido → no hace nada.
 4. Opcionalmente, guarda los cambios del repo clonado y hace `git push --force`.
+5. Guarda un log de la salida de Terraform (`<REPO>.txt`) en el repositorio 
+   - Si se hizo `apply`, sube el log (si no existe).
+   - Si se hizo `destroy`, borra el log del repo `infraTerraform`.
 
 Todo esto se ejecuta **directamente en GitHub Actions**, sin necesidad de una instancia EC2.
 
@@ -34,14 +37,17 @@ Todo esto se ejecuta **directamente en GitHub Actions**, sin necesidad de una in
 - Token de acceso personal con permisos a repositorios privados (como REPO_ACCESS_TOKEN).
 - Terraform configurado en el repositorio clonado.
 - Archivo config/config.properties correctamente definido.
+- Secrets configurados en GitHub.
 
 ## 🔐 Configuración de Secrets
 
 En tu repositorio de GitHub, ve a `Settings > Secrets and variables > Actions` y añade:
 
-| Nombre del Secret   | Descripción                                                                |
-|---------------------|----------------------------------------------------------------------------|
-| `REPO_ACCESS_TOKEN` | Token de acceso a GitHub con permisos para clonar repos privados           |
+| Nombre del Secret       | Descripción                                                         |
+|-------------------------|---------------------------------------------------------------------|
+| `AWS_ACCESS_KEY_ID`     | Access Key de AWS                                                   |
+| `AWS_SECRET_ACCESS_KEY` | Secret Access Key de AWS                                            |
+| `REPO_ACCESS_TOKEN`     | 	GitHub PAT con permisos para clonar y hacer push en ambos repos   |
 
 ## 🧩 config.properties – Ejemplo
 
@@ -57,6 +63,12 @@ REPO_URL=https://github.com/tu-usuario/otro-repo.git
 install=true
 
 ```
+## 📦 Archivos de salida
+
+- Se genera un archivo `<REPO>.txt` con la salida del comando `terraform apply` o `terraform destroy`.
+- Este archivo se guarda en el repo `infraTerraform`:
+    - Solo se sube si no existe.
+    - Se borra si se ejecutó `terraform destroy`.
 
 ## 🚀 Cómo funciona
 
