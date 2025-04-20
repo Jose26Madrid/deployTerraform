@@ -151,6 +151,7 @@ jobs:
             if [ -f "${OUTPUT_FILE}" ]; then
               echo "❌ Archivo de salida ya existe. No se puede subir."
               ls -lrt
+              exit 0
             else
               echo "📄 Copiando archivo '${OUTPUT_FILE}' al repo '${CLONED_REPO_NAME}'"
               ls -lrt ../${ORIGINAL_REPO_NAME}
